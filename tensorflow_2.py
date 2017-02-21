@@ -37,13 +37,6 @@ def input_queue():
             min_after_dequeue=min_after_dequeue)
         return example_batch, label_batch
     
-def inputs():
-    # Defining the input placeholders.
-    with tf.variable_scope('inputs'):
-        x = tf.placeholder(tf.float32, shape=(None, 2)) # 2-d vector
-        y = tf.placeholder(tf.float32, shape=(None, 1)) # scalar
-        return x, y
-
 def template_fc(x, input_size, output_size, name=None):
     with tf.variable_scope(name):
         w = tf.Variable(tf.random_normal([input_size,output_size]))
