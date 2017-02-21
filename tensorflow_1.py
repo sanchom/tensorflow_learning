@@ -1,3 +1,6 @@
+# Following https://www.tensorflow.org/community/style_guide, except I
+# use 4-spaces (for now).
+
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
