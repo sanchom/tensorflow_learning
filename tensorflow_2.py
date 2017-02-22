@@ -37,7 +37,7 @@ def input_queue():
             min_after_dequeue=min_after_dequeue)
         return example_batch, label_batch
     
-def template_fc(x, input_size, output_size, name=None):
+def create_fc_layer(x, input_size, output_size, name=None):
     with tf.variable_scope(name):
         w = tf.Variable(tf.random_normal([input_size,output_size]))
         tf.summary.histogram('w', w)
@@ -48,10 +48,10 @@ def template_fc(x, input_size, output_size, name=None):
     
 def inference(x):
     # Defining the inference graph and associated summaries.
-    fc1 = template_fc(x, 2, 256, 'fc1')
-    fc2 = template_fc(fc1, 256, 512, 'fc2')
-    fc3 = template_fc(fc2, 512, 512, 'fc3')
-    fc4 = template_fc(fc3, 512, 1, 'fc4')
+    fc1 = create_fc_layer(x, 2, 256, 'fc1')
+    fc2 = create_fc_layer(fc1, 256, 512, 'fc2')
+    fc3 = create_fc_layer(fc2, 512, 512, 'fc3')
+    fc4 = create_fc_layer(fc3, 512, 1, 'fc4')
     return fc4
 
 def loss(y, y_hat):
