@@ -23,11 +23,12 @@ def get_dummy_data():
     data = np.zeros((1, MAX_LENGTH, VOCAB_SIZE), np.float32)
     for i in xrange(MAX_LENGTH):
         data[0,i,sequence[i%len(sequence)]] = 1
-    targets = np.zeros((1, MAX_LENGTH, VOCAB_SIZE), np.float32)
+    targets = np.zeros((1, MAX_LENGTH), np.int32)
     # The target is just the input sequence shifted by one. I.e. the
     # network is learning to predict the next number in the sequence.
+    # But, the targets are represented simply by integers, not 1-of-k.
     for i in xrange(MAX_LENGTH):
-        targets[0,i,sequence[(i+1)%len(sequence)]] = 1
+        targets[0,i] = sequence[(i+1)%len(sequence)]
     return data, targets
 
 def optimizer(loss_op, global_step):
@@ -42,7 +43,7 @@ def optimizer(loss_op, global_step):
 def inputs():
     with tf.variable_scope('inputs'):
         data = tf.placeholder(tf.float32, [1, MAX_LENGTH, VOCAB_SIZE])
-        targets = tf.placeholder(tf.float32, [1, MAX_LENGTH, VOCAB_SIZE])
+        targets = tf.placeholder(tf.int32, [1, MAX_LENGTH])
         return data, targets
 
 def inference(data):
@@ -60,23 +61,24 @@ def inference(data):
         output_weights = tf.Variable(tf.truncated_normal([NUM_NEURONS, VOCAB_SIZE], stddev=0.1), name='output_weights')
         output_bias = tf.Variable(tf.constant(0.1, shape=[VOCAB_SIZE]), name='output_bias')
 
-        predictions = tf.nn.softmax(tf.matmul(output, output_weights) + output_bias)
+        logits = tf.matmul(output, output_weights) + output_bias
         # Folding the predictions back into sequences of MAX_LENGTH
-        predictions = tf.reshape(predictions, [-1, MAX_LENGTH, VOCAB_SIZE])
-        return predictions
+        logits = tf.reshape(logits, [-1, MAX_LENGTH, VOCAB_SIZE])
+        return logits
 
-def loss(predictions, targets):
-    cross_entropy = -tf.reduce_mean(tf.reduce_sum(targets * tf.log(predictions), [1, 2]))
-    tf.summary.scalar('loss', cross_entropy)
-    return cross_entropy
+def loss(logits, targets):
+    weights = tf.ones_like(targets, dtype=tf.float32)
+    sequence_loss = tf.contrib.seq2seq.sequence_loss(logits, targets, weights)
+    tf.summary.scalar('loss', sequence_loss)
+    return sequence_loss
 
 # Define the global step and its initialization.
 global_step = tf.Variable(0, name='global_step', trainable=False)
 
 # Putting the graph together.
 input_sequence, target_sequence = inputs()
-predicted_sequence = inference(input_sequence)
-loss_op = loss(predicted_sequence, target_sequence)
+logit_sequence = inference(input_sequence)
+loss_op = loss(logit_sequence, target_sequence)
 optimization_op = optimizer(loss_op, global_step)
 
 # MonitoredTrainingSession automatically handles global variable
