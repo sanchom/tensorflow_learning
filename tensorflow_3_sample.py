@@ -1,7 +1,16 @@
 # Following https://www.tensorflow.org/community/style_guide, except I
 # use 4-spaces (for now).
 #
-# A non-batched char-rnn model on dummy data.
+# The sampler for the char-rnn trained with tensorflow_3.py.
+#
+# TODO: Make sampler and trainer use a common model, to remove
+# redundancy, and make loading checkpoint files work without renaming
+# keys.
+#
+# TODO: Use tf.FLAGS
+#
+# TODO: Have trainer save configuration settings to remove hard-coded
+# dependencies.
 
 from __future__ import absolute_import
 from __future__ import division
