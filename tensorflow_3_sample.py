@@ -24,7 +24,7 @@ import tensorflow as tf
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
-flags.DEFINE_integer('length', 1000, 'Number of characters to generate.')
+flags.DEFINE_integer('length', 1000, 'Number of lines to generate.')
 flags.DEFINE_string('checkpoint_dir', '/tmp',
                     'The checkpoint is in this directory.')
 flags.DEFINE_string('prime', '2016',
@@ -102,7 +102,7 @@ def main(argv=None):
 
             ret = prime
             char = prime[-1]
-            for n in range(FLAGS.length):
+            while (len(ret.split('\n')) < FLAGS.length):
                 x = np.zeros((1, vocab.vocab_size))
                 x[0, vocab.vocab.index(char)] = 1
                 feed = {input_char: x, input_state:state}
