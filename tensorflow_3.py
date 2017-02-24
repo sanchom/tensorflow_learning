@@ -15,9 +15,10 @@ import shutil
 import numpy as np
 import tensorflow as tf
 
-NUM_NEURONS = 128
+NUM_NEURONS = 256
 MAX_LENGTH = 200
-BATCH_SIZE = 16
+BATCH_SIZE = 8
+NUM_LAYERS = 3
 
 class Data(object):
     def __init__(self):
@@ -50,7 +51,7 @@ class Data(object):
 
 def optimizer(loss_op, global_step):
     with tf.variable_scope('optimizer'):
-        rate = tf.train.exponential_decay(0.01, global_step, 1000, 0.97)
+        rate = tf.train.exponential_decay(0.01, global_step, 10000, 0.98)
         tf.summary.scalar('learning_rate', rate)
         optimize_op = tf.train.AdamOptimizer(learning_rate=rate).minimize(
             loss_op,
@@ -68,6 +69,8 @@ def inference(data, vocab_size):
     with tf.variable_scope('rnn'):
         # Defining the recurrent cell
         cell = tf.contrib.rnn.LSTMCell(NUM_NEURONS)
+        cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=0.9, output_keep_prob=0.9)
+        cell = tf.contrib.rnn.MultiRNNCell([cell] * NUM_LAYERS)
 
         output, _ = tf.nn.dynamic_rnn(cell, data, dtype=tf.float32)
 
@@ -107,7 +110,7 @@ optimization_op = optimizer(loss_op, global_step)
 shutil.rmtree('/tmp/tensorflow_3', ignore_errors=True)
 with tf.train.MonitoredTrainingSession(
         checkpoint_dir="/tmp/tensorflow_3",
-        hooks=[tf.train.StopAtStepHook(last_step=100000)]
+        hooks=[tf.train.StopAtStepHook(last_step=1000000)]
 ) as sess:
     step = 1
     while not sess.should_stop():
