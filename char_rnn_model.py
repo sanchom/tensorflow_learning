@@ -5,18 +5,17 @@ from __future__ import print_function
 import tensorflow as tf
 
 class CharRnnModel(object):
-  def __init__(self, sequence_length, cell_size, layers, vocab_size):
+  def __init__(self, input_queue, sequence_length, cell_size, layers, vocab_size):
     self.sequence_length = sequence_length
-    with tf.variable_scope('inputs'):
-      self.data = tf.placeholder(tf.float32, [None, self.sequence_length, vocab_size], name='input_sequence')
-      self.targets = tf.placeholder(tf.int32, [None, self.sequence_length], name='target_sequence')
+
+    (input_sequence, target_sequence) = input_queue
     
     with tf.variable_scope('inference'):
       self.cell = tf.contrib.rnn.LSTMCell(cell_size)
       self.cell = tf.contrib.rnn.DropoutWrapper(self.cell, input_keep_prob=0.8, output_keep_prob=0.8)
       self.cell = tf.contrib.rnn.MultiRNNCell([self.cell] * layers)
 
-      output, _ = tf.nn.dynamic_rnn(self.cell, self.data, dtype=tf.float32)
+      output, _ = tf.nn.dynamic_rnn(self.cell, input_sequence, dtype=tf.float32)
 
       # Flattening into a bunch of rows, each num_neurons long. Thus, each
       # output vector, at every timestep of every batch is given its own row
@@ -33,7 +32,7 @@ class CharRnnModel(object):
     with tf.variable_scope('loss'):
       mask = tf.ones_like(self.targets, dtype=tf.float32)
       self.sequence_loss = tf.contrib.seq2seq.sequence_loss(
-        self.logits, self.targets, mask)
+        self.logits, target_sequence, mask)
 
   def loss_op(self):
     return self.sequence_loss
