@@ -30,9 +30,10 @@ class CharRnnModel(object):
       self.logits = tf.reshape(self.logits, [-1, self.sequence_length, vocab_size])
 
     with tf.variable_scope('loss'):
-      mask = tf.ones_like(self.targets, dtype=tf.float32)
+      mask = tf.ones_like(target_sequence, dtype=tf.float32)
       self.sequence_loss = tf.contrib.seq2seq.sequence_loss(
         self.logits, target_sequence, mask)
+      tf.summary.scalar('loss', self.sequence_loss)
 
   def loss_op(self):
     return self.sequence_loss
