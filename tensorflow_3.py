@@ -43,7 +43,7 @@ def train():
   input_pipeline = InputSequencePipeline(len(vocab), batch_size=2)
   (input_sequence, target_sequence) = input_pipeline.tensors()
   rnn_model = CharRnnModel(
-    sequence_length=200, cell_size=128, layers=2, vocab_size=len(vocab), dropout=0.2)
+    sequence_length=200, cell_size=128, layers=2, vocab_size=len(vocab), dropout=0.2, mode='train')
   logits = rnn_model.inference(input_sequence)
   loss = rnn_model.loss(logits, target_sequence)
   optimization_op = optimizer(loss, global_step)
@@ -66,10 +66,8 @@ def train():
 def sample():
   vocab = load_vocab()
 
-  # TODO: merge creation of sampling ops into initialization.
   rnn_model = CharRnnModel(
-    sequence_length=200, cell_size=128, layers=2, vocab_size=len(vocab), dropout=0)
-  rnn_model.define_sample_elements()
+    sequence_length=200, cell_size=128, layers=2, vocab_size=len(vocab), dropout=0, mode='sample')
 
   with tf.Session() as sess:
     tf.global_variables_initializer().run()

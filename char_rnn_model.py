@@ -6,12 +6,19 @@ import numpy as np
 import tensorflow as tf
 
 class CharRnnModel(object):
-  def __init__(self, sequence_length, cell_size, layers, vocab_size, dropout):
+  def __init__(self, sequence_length, cell_size, layers, vocab_size, dropout, mode):
+    assert(mode == 'train' or mode == 'sample')
+    assert(dropout == 0 or mode == 'train')
     self.sequence_length = sequence_length
     self.cell_size = cell_size
     self.vocab_size = vocab_size
-    
+
     with tf.variable_scope('inference'):
+      # Note: These commands don't create tensors or ops. Simply
+      # defining the form of the cell doesn't make tensorflow create
+      # trainable variables for these. That happens by calling
+      # tf.nn.dynamic_rnn(...) or by otherwise using this cell as part
+      # of the graph.
       self.cell = tf.contrib.rnn.LSTMCell(self.cell_size)
       self.cell = tf.contrib.rnn.DropoutWrapper(
         self.cell, input_keep_prob=(1-dropout), output_keep_prob=(1-dropout))
@@ -20,8 +27,19 @@ class CharRnnModel(object):
       self.output_weights = tf.Variable(tf.truncated_normal([self.cell_size, self.vocab_size], stddev=0.1), name='output_weights')
       self.output_bias = tf.Variable(tf.constant(0.1, shape=[self.vocab_size]), name='output_bias')
 
+    if mode == 'sample':
+      self._define_sample_elements()
+
   def inference(self, input_sequence):
     with tf.variable_scope('inference'):
+      # TODO: Use a fused RNN for faster GPU computation.
+
+      # Note: dynamic_rnn creates a name scope 'rnn', within which the
+      # internal LSTM weights and biases are located. Thus, the name
+      # of the LSTM weights and biases are prefixed by
+      # 'inference/rnn'. When loading at sample time, you have to be
+      # sure to match this prefix manually, since you likely won't be
+      # calling dynamic_rnn.
       output, _ = tf.nn.dynamic_rnn(self.cell, input_sequence, dtype=tf.float32)
       # Flattening into a bunch of rows, each num_neurons long. Thus, each
       # output vector, at every timestep of every batch is given its own row
@@ -39,11 +57,12 @@ class CharRnnModel(object):
       tf.summary.scalar('loss', sequence_loss)
       return sequence_loss
 
-  def define_sample_elements(self):
-    # TODO: Why does this variable scope name need to be inference/rnn
-    # in order to get the lstm weights to load properly from the
-    # checkpoint file?
+  def _define_sample_elements(self):
+    # Explicitly naming this scope 'inference/rnn' to match the
+    # implicitly created 'rnn' scope when using dynamic_rnn during
+    # training inference.
     with tf.variable_scope('inference/rnn'):
+      # TODO: Switch to new dynamic_decoder.
       self.input_char = tf.placeholder(tf.float32, [1, self.vocab_size])
       self.input_state = self.cell.zero_state(1, tf.float32)
 
@@ -84,4 +103,3 @@ class CharRnnModel(object):
       char = prediction
 
     return sampled_sequence
-
