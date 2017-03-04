@@ -19,6 +19,8 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string('vocabulary', '', 'Vocabulary file.')
 flags.DEFINE_string('mode', 'train', '[train|sample]')
+flags.DEFINE_string('checkpoint_dir', '/tmp/char_rnn',
+                    'Where to store training data.')
 
 def load_vocab():
   with open(FLAGS.vocabulary) as f:
@@ -48,12 +50,11 @@ def train():
   loss = rnn_model.loss(logits, target_sequence)
   optimization_op = optimizer(loss, global_step)
 
-  # TODO: Make this a flag.
-  shutil.rmtree('/tmp/char_rnn', ignore_errors=True)
+  shutil.rmtree(FLAGS.checkpoint_dir, ignore_errors=True)
   # TODO: Make the checkpoint dir a subdirectory, named based on the
   # architectural hyperparameters.
   with tf.train.MonitoredTrainingSession(
-      checkpoint_dir="/tmp/char_rnn",
+      checkpoint_dir=FLAGS.checkpoint_dir,
       hooks=[tf.train.StopAtStepHook(last_step=1000000)]
   ) as sess:
     step = 1
@@ -66,6 +67,7 @@ def train():
 def sample():
   vocab = load_vocab()
 
+  # TODO: Load this from a configuration that's saved during training.
   rnn_model = CharRnnModel(
     sequence_length=200, cell_size=128, layers=2, vocab_size=len(vocab), dropout=0, mode='sample')
 
@@ -73,7 +75,7 @@ def sample():
     tf.global_variables_initializer().run()
 
     saver = tf.train.Saver(tf.global_variables())
-    checkpoint = tf.train.get_checkpoint_state('/tmp/char_rnn')
+    checkpoint = tf.train.get_checkpoint_state(FLAGS.checkpoint_dir)
     if checkpoint and checkpoint.model_checkpoint_path:
       saver.restore(sess, checkpoint.model_checkpoint_path)
     else:
