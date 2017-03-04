@@ -31,6 +31,7 @@ flags.DEFINE_integer('batch_size', 1, 'Batch size for training.')
 flags.DEFINE_float('dropout', 0, 'Amount of dropout for training.')
 flags.DEFINE_float('initial_lr', 0.01, 'Initial learning rate.')
 flags.DEFINE_string('example_file', 'examples.pb', 'File with serialized tf.SequenceExamples.')
+flags.DEFINE_integer('minutes_to_train', 60, 'Maximum number of minutes to train.')
 
 def load_vocab():
   with open(FLAGS.vocabulary) as f:
@@ -93,7 +94,7 @@ def train():
 
   with tf.train.MonitoredTrainingSession(
       checkpoint_dir=specialized_checkpoint_dir,
-      hooks=[StopAtTimeHook(60)]
+      hooks=[StopAtTimeHook(60 * FLAGS.minutes_to_train)]
   ) as sess:
     while not sess.should_stop():
       sess.run(optimization_op)
