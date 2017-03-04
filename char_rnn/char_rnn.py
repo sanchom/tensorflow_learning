@@ -9,6 +9,7 @@ import pickle
 import os
 import random
 import shutil
+import time
 import numpy as np
 import tensorflow as tf
 
@@ -76,16 +77,26 @@ def train():
   loss = rnn_model.loss(logits, target_sequence)
   optimization_op = optimizer(loss, global_step)
 
+  class StopAtTimeHook(tf.train.SessionRunHook):
+    def __init__(self, seconds):
+      self._end = time.time() + seconds
+
+    def begin(self):
+      self._global_step_tensor = tf.train.get_global_step()
+
+    def before_run(self, run_context):
+      return None
+
+    def after_run(self, run_context, run_values):
+      if time.time() >= self._end:
+        run_context.request_stop()
+
   with tf.train.MonitoredTrainingSession(
       checkpoint_dir=specialized_checkpoint_dir,
-      hooks=[tf.train.StopAtStepHook(last_step=1000000)]
+      hooks=[StopAtTimeHook(60)]
   ) as sess:
-    step = 1
     while not sess.should_stop():
-      if (step % 100 == 0):
-        print('Step {}'.format(step))
       sess.run(optimization_op)
-      step += 1
 
 def sample():
   vocab = load_vocab()
@@ -116,6 +127,7 @@ def main(_):
     train()
   elif FLAGS.mode == 'sample':
     sample()
+  print('Exiting program...')
 
 if __name__ == '__main__':
   tf.app.run()
