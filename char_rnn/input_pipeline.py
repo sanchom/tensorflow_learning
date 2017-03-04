@@ -6,7 +6,7 @@ from six.moves import xrange
 
 import tensorflow as tf
 
-class InputSequencePipeline(object):
+class InputPipeline(object):
   def __init__(self, vocab_depth, batch_size):
     with tf.variable_scope('input_queue'):
       filenames = ['examples.pb']

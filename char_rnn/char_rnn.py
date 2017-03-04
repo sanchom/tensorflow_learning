@@ -11,8 +11,8 @@ import shutil
 import numpy as np
 import tensorflow as tf
 
-from char_rnn_model import CharRnnModel
-from sequence_pipeline import InputSequencePipeline
+from model import CharRnnModel
+from input_pipeline import InputPipeline
 
 flags = tf.app.flags
 FLAGS = flags.FLAGS
