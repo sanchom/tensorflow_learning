@@ -94,7 +94,8 @@ def train():
 
   with tf.train.MonitoredTrainingSession(
       checkpoint_dir=specialized_checkpoint_dir,
-      hooks=[StopAtTimeHook(60 * FLAGS.minutes_to_train)]
+      hooks=[StopAtTimeHook(60 * FLAGS.minutes_to_train),
+             tf.train.NanTensorHook(loss, fail_on_nan_loss=False)]
   ) as sess:
     while not sess.should_stop():
       sess.run(optimization_op)
