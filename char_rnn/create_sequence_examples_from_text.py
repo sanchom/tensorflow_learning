@@ -21,8 +21,10 @@ flags.DEFINE_integer('sequence_length', 200,
                      'How long each training sequence should be.')
 flags.DEFINE_integer('num_sequences', 100,
                      'How many sequence examples to extract.')
-flags.DEFINE_string('output', '/dev/null',
-                    'Location to store example sequences.')
+flags.DEFINE_string('output', '',
+                    'Location to store example sequences. A suffix will be appended.')
+flags.DEFINE_integer('sequences_per_file', -1,
+                     'Max sequences per file. If unspecified, unlimited.')
 
 def learn_vocab(paths):
   vocab = set()
@@ -71,19 +73,40 @@ def main(argv):
   if len(input_list) < 1:
     print('No input files provided.')
     exit(1)
+  if FLAGS.output == '':
+    print('No output pattern provided.')
+    exit(1)
   vocab = learn_vocab(input_list)
   integerization_map = get_reverse_map(vocab)
   save_vocab(vocab)
 
   data = load_data(input_list)
 
-  with open(FLAGS.output, 'w') as f:
-    writer = tf.python_io.TFRecordWriter(f.name)
-    for i in xrange(FLAGS.num_sequences):
-      example = get_example(data, integerization_map)
-      writer.write(example.SerializeToString())
-    writer.close()
-    print('Wrote {} tf.ExampleSequences to {}'.format(FLAGS.num_sequences, FLAGS.output))
+  if FLAGS.sequences_per_file > 0:
+    num_files = FLAGS.num_sequences // FLAGS.sequences_per_file
+    if FLAGS.num_sequences % FLAGS.sequences_per_file > 0:
+      num_files += 1
+  else:
+    num_files = 1
+
+  total_sequences = 0
+
+  while total_sequences < FLAGS.num_sequences:
+    if FLAGS.sequences_per_file > 0:
+      file_id = total_sequences // FLAGS.sequences_per_file
+    else:
+      file_id = 0
+    filename = '{}_{:06d}_of_{:06d}.pb'.format(FLAGS.output, file_id + 1, num_files)
+    with open(filename, 'w') as f:
+      writer = tf.python_io.TFRecordWriter(f.name)
+      examples_in_this_file = 0
+      while (FLAGS.sequences_per_file < 0 or examples_in_this_file < FLAGS.sequences_per_file) and total_sequences < FLAGS.num_sequences:
+        example = get_example(data, integerization_map)
+        writer.write(example.SerializeToString())
+        examples_in_this_file += 1
+        total_sequences += 1
+      writer.close()
+      print('Wrote {} tf.ExampleSequences to {}'.format(examples_in_this_file, filename))
 
 if __name__ == '__main__':
   tf.app.run()
