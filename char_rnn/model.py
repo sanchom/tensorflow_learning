@@ -19,7 +19,8 @@ class CharRnnModel(object):
       # trainable variables for these. That happens by calling
       # tf.nn.dynamic_rnn(...) or by otherwise using this cell as part
       # of the graph.
-      self.cell = tf.contrib.rnn.LSTMCell(self.cell_size)
+      self.cell = tf.contrib.rnn.LSTMBlockCell(self.cell_size)
+
       self.cell = tf.contrib.rnn.DropoutWrapper(
         self.cell, input_keep_prob=(1-dropout), output_keep_prob=(1-dropout))
       self.cell = tf.contrib.rnn.MultiRNNCell([self.cell] * layers)
