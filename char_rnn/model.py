@@ -33,7 +33,10 @@ class CharRnnModel(object):
 
   def inference(self, input_sequence):
     with tf.variable_scope('inference'):
-      # TODO: Use a fused RNN for faster GPU computation.
+      # Not using a LSTMBlockFusedCell because it requires a lot of
+      # extra work to get working with multiple layers and dropout
+      # between layers. This would be an option if training efficiency
+      # is critical.
 
       # Note: dynamic_rnn creates a name scope 'rnn', within which the
       # internal LSTM weights and biases are located. Thus, the name
