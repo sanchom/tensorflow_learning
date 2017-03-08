@@ -30,7 +30,7 @@ flags.DEFINE_integer('layers', 1, 'How many layers in the LSTM.')
 flags.DEFINE_integer('batch_size', 1, 'Batch size for training.')
 flags.DEFINE_float('dropout', 0, 'Amount of dropout for training.')
 flags.DEFINE_float('initial_lr', 0.01, 'Initial learning rate.')
-flags.DEFINE_string('example_file', 'examples.pb', 'File with serialized tf.SequenceExamples.')
+flags.DEFINE_string('example_basename', 'examples', 'Prefix for files with serialized tf.SequenceExamples.')
 flags.DEFINE_integer('minutes_to_train', 60, 'Maximum number of minutes to train.')
 
 def load_vocab():
@@ -69,7 +69,7 @@ def train():
   with open(config_path, 'w') as f:
     pickle.dump(config, f)
 
-  input_pipeline = InputPipeline([FLAGS.example_file], len(vocab), batch_size=FLAGS.batch_size)
+  input_pipeline = InputPipeline(FLAGS.example_basename, len(vocab), batch_size=FLAGS.batch_size)
   (input_sequence, target_sequence) = input_pipeline.tensors()
   rnn_model = CharRnnModel(
     sequence_length=200, cell_size=FLAGS.cell_size, layers=FLAGS.layers,

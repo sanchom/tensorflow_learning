@@ -7,9 +7,12 @@ from six.moves import xrange
 import tensorflow as tf
 
 class InputPipeline(object):
-  def __init__(self, example_paths, vocab_depth, batch_size):
+  def __init__(self, example_basename, vocab_depth, batch_size):
     with tf.variable_scope('input_queue'):
-      filename_queue = tf.train.string_input_producer(example_paths)
+      pattern = './{}_*_of_*.pb'.format(example_basename)
+      print(pattern)
+      filename_list = tf.train.match_filenames_once(pattern)
+      filename_queue = tf.train.string_input_producer(filename_list)
       reader = tf.TFRecordReader()
       key, value = reader.read(filename_queue)
 
