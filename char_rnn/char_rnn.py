@@ -32,6 +32,8 @@ flags.DEFINE_float('dropout', 0, 'Amount of dropout for training.')
 flags.DEFINE_float('initial_lr', 0.01, 'Initial learning rate.')
 flags.DEFINE_string('example_basename', 'examples', 'Prefix for files with serialized tf.SequenceExamples.')
 flags.DEFINE_integer('minutes_to_train', 60, 'Maximum number of minutes to train.')
+flags.DEFINE_integer('sample_length', 30, 'Number of lines to sample.')
+flags.DEFINE_string('prime', '2016', 'Snippet to prime the sampler with.')
 
 def load_vocab():
   with open(FLAGS.vocabulary) as f:
@@ -122,7 +124,7 @@ def sample():
       print('Failed to load checkpoint.')
       exit(1)
 
-    print(rnn_model.sample(sess, vocab, length=30, prime='2016'))
+    print(rnn_model.sample(sess, vocab, length=FLAGS.sample_length, prime=FLAGS.prime))
 
 def main(_):
   if FLAGS.mode == 'train':

@@ -87,7 +87,7 @@ class CharRnnModel(object):
       x = np.zeros((1, self.vocab_size))
       x[0, integerization_map[char]] = 1
       feed = {self.input_char: x, self.input_state: state}
-      [self.output, self.state] = sess.run(self.output_and_state, feed)
+      [_, state] = sess.run(self.output_and_state, feed)
 
     def weighted_pick(weights):
       t = np.cumsum(weights)
