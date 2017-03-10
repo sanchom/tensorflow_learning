@@ -8,7 +8,6 @@ import tensorflow as tf
 class CharRnnModel(object):
   def __init__(self, sequence_length, cell_size, layers, vocab_size, dropout, mode):
     assert(mode == 'train' or mode == 'sample')
-    assert(dropout == 0 or mode == 'train')
     self.sequence_length = sequence_length
     self.cell_size = cell_size
     self.vocab_size = vocab_size
@@ -21,8 +20,9 @@ class CharRnnModel(object):
       # of the graph.
       self.cell = tf.contrib.rnn.LSTMBlockCell(self.cell_size)
 
-      self.cell = tf.contrib.rnn.DropoutWrapper(
-        self.cell, input_keep_prob=(1-dropout), output_keep_prob=(1-dropout))
+      if mode == 'sample':
+        self.cell = tf.contrib.rnn.DropoutWrapper(
+          self.cell, input_keep_prob=(1-dropout), output_keep_prob=(1-dropout))
       self.cell = tf.contrib.rnn.MultiRNNCell([self.cell] * layers)
 
       self.output_weights = tf.Variable(tf.truncated_normal([self.cell_size, self.vocab_size], stddev=0.1), name='output_weights')
